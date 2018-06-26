@@ -1,0 +1,125 @@
+How to build an independent app!!!!!!???????
+
+
+
+1.建立一个实例去扫描sensor的数量，然后根据这个数建立实例数组
+2.how to connect to device and how to connect to sensors
+3.what happend when connecting device successfully
+
+4.sensorId in app.sensors
+  打开sensor的函数：onSensorButton
+
+5.获取可用的sensor的函数：app.settings.CURRENT.SENSOR_COMBINATION.indexOf('_gyro')
+6.可用的sensor在SENSOR_COMBINATION:
+	_gyro
+	_accel
+	_mag
+	_all
+2ea78970-7d44-44bb-b097-26183f402400:2ea78970-7d44-44bb-b097-26183f402409
+
+0.initialize 一个device，定义好获取数据时的回调函数
+1.创建一个instance扫描device，获取数量N和address，并存入数组deviceAddr[N]=[address1,address2,...]
+2.initialize device1,device2,...,并创建instance1,instance2,...,定义获取数据时的回调函数
+3.将所有device连接上之后再打开每个device里的sensor
+
+onScanButton = function()
+{
+	console.log("scan button!")//my edit
+	iotsensor.startScanningForDevices(
+		function(device)
+		{
+			// Only show IoT devices based on the advertising name
+			if(device.name === evothings.iotsensor.SFL || device.name === evothings.iotsensor.RAW)
+			{
+				device.timeStamp = Date.now();
+
+				// Insert the device into table of found devices.
+				devices[device.address] = device;
+				console.log("device address: " + device.address);//my edit
+				scannedSensors[device.address] = 
+			}
+		}
+	);
+	displayConnectStatus("Scanning for Bluetooth devices..");
+	//每隔0.5秒显示一次页面
+	updateTimer = setInterval(displayDeviceList, 500);
+	
+	setTimeout(
+		function() 
+		{
+			iotsensor.stopScanningForDevices();
+			displayConnectStatus('Stopped scanning for devices!!');
+
+			/*my edit*/
+			var element = 
+				'<button onclick="app.connectMultiDevices()" class="blue small wide">CONNECT ALL</button>';
+			document.getElementById('found-devices').innerHTML += element;
+			
+			var element = 
+				'<button onclick="app.onDisconnectButton()" class="red small wide">CONNECT ALL</button>';
+			document.getElementById('found-devices').innerHTML += element;
+
+			clearInterval(updateTimer);
+		}, 
+		(scanTime * 1000)
+	); 
+}
+
+LOG: 6,2,3,230,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.54°C
+LOG: 6,2,3,230,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.54°C
+LOG: 6,2,3,231,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.55°C
+LOG: 6,2,3,231,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.55°C
+LOG: 6,2,3,233,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.57°C
+LOG: 6,2,3,229,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.53°C
+LOG: 6,2,3,234,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.58°C
+LOG: 6,2,3,235,4,0,0
+LOG:  address: IoT-DK-SFLTemperature data: 12.59°C
+
+ubuntu14.04
+mosquitto 1.4.9
+
+ip-172-31-24-85.us-east-2.compute.internal.crt
+ip-172-31-24-85.us-east-2.compute.internal.csr
+ip-172-31-24-85.us-east-2.compute.internal.key
+
+mosquitto -c /etc/mosquitto/mosquitto.conf
+ec2-18-217-114-173.us-east-2.compute.amazonaws.com
+1883
+
+ke_msg_send
+nohup python -u dataCollecting.py > test.out 2>&1 &
+tail -f test.out
+
+nohup python -u dataCollecting2.py > data.out 2>&1 &
+tail -f data.out
+2ea78970-7d44-44bb-b097-26183f402400:2ea78970-7d44-44bb-b097-26183f40240a:00002902-0000-1000-8000-00805f9b34fb
+=LEFT(B2,18)
+1.USE iot sensors data to predict Knee adduction moment (KAM) 
+2. Compare the measurement agreement between IoT and research grade sensors
+3.how the sensors determine the sampling rate or power saving mode
+4.the data transmitting time should be short/real time issue
+
+
+LM
+960.9171753	-270.0563965	-51.73602295
+-0.924615385	0.335037221	0.002878412
+
+LL
+959.6693155	-254.5468123	-84.80905575
+-0.934912718 0.190124688	0.276608479
+
+RL
+980.4555734	-183.7150188	-45.05242984
+-0.916318408 0.144303483	0.125348259
+
+RM
+951.0628281	304.8729926		3.047848229
+-0.874621027 0.404205379	-0.048606357
+

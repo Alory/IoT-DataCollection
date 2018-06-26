@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>mqtt test</title>
+</head>
+<body>
+
+	<button class="blue wide" onclick="connectMqtt()">Connect MQTT</button>
+	<ul id="status" class="dynamic"></ul>
+	<script src="js/paho-mqtt.js"></script>
+	<script type="text/javascript">		
+		// Create a client instance: Broker, Port, Websocket Path, Client ID
+		client = new Paho.MQTT.Client("ec2-18-217-114-173.us-east-2.compute.amazonaws.com", 1883, "BLE-IOT");
+		var arr = new Array(3)
+		arr[0] = "George"
+		arr[1] = "John"
+		arr[2] = "Thomas"
+
+		console.log(arr.join("\n"))
+		function connectMqtt()
+		{
+			client.connect({onSuccess: onConnect});			
+		}
+		
+		 
+		// set callback handlers
+		client.onConnectionLost = function (responseObject) {
+		    console.log("Connection Lost: "+responseObject.errorMessage);
+		}
+		 
+		client.onMessageArrived = function (message) {
+		  console.log("Message Arrived: "+message.payloadString);
+		  document.getElementById('status').innerHTML += "Message Arrived: "+message.payloadString+'<br/>';
+		}
+		 
+		// Called when the connection is made
+		function onConnect(){
+			message = "Connected!"
+			document.getElementById('status').innerHTML += message + "<br/>";
+			client.subscribe("test");
+		}		
+	</script>
+</body>
+</html>

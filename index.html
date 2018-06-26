@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no,
+		shrink-to-fit=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+	<title>Dialog Semiconductor IoT Sensor TEST</title>
+
+	<style>
+		@import 'ui/css/evothings-app.css';
+		@import 'app.css';
+	</style>
+
+	<script>
+		// Redirect console.log to Evothings Workbench.
+		if (window.hyper && window.hyper.log) { console.log = hyper.log }
+	</script>
+</head>
+<body>
+	<h1>DEMO APP</h1>
+	<p style="text-align: center" id="scan-status">Initializing App</p>
+	<button class="blue wide" onclick="onScanButton()">Scan</button>
+	<!-- <button class="blue wide" onclick="connect()">Connect</button> -->
+	<button class="green wide" onclick="temperatureOn()">temperatureOn</button>
+	<button class="green wide" onclick="accelerometerOn()">accelerometerOn</button>
+	<button class="green wide" onclick="gyroscopeOn()">gyroscopeOn</button>
+	<!-- <button class="green wide" onclick="humidityOn()">humidityOn</button> -->
+	<!--<button class="green wide" onclick="magnetometerOn()">magnetometerOn</button>
+	<button class="green wide" onclick="humidityOn()">humidityOn</button> -->
+	<!-- <button class="green wide" onclick="barometerOn()">barometerOn</button> -->
+	<button class="green wide" onclick="sensor_fusionOn()">sensor_fusionOn</button>
+	<!-- <button class="red wide" onclick="disconnect()">discnnect</button> -->
+	<button class="blue wide" onclick="sensorOn()">sensorOn</button>
+	<button class="red wide" onclick="sensorOff()">sensorOff</button>	
+	<br/><br/>	
+	<button onclick="connectMultiDevices()" class="blue small wide">CONNECT ALL</button>
+	<button onclick="onDisconnectButton()" class="red small wide">DISCONNECT ALL</button>
+	<ul id="found-devices" class="dynamic"></ul>
+	<canvas width="300" height="200" id="chart_canvas"></canvas>
+
+	<script src="cordova.js"></script>
+	<script src="js/paho-mqtt.js"></script>
+	<script src="libs/evothings/evothings.js"></script>
+	<script src="libs/evothings/ui/ui.js"></script>
+	<script src="js/smoothie.js"></script>
+	<script src="js/example.js"></script>
+	<script src="libs/evothings/dialog-iotsensor/iotsensor.js"></script>
+	<script src="libs/jquery/jquery.js"></script>
+</body>
+
+</html>
