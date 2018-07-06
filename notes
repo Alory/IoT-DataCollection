@@ -123,3 +123,6 @@ RM
 951.0628281	304.8729926		3.047848229
 -0.874621027 0.404205379	-0.048606357
 
+
+Bluetooth devices are filtered by MAC (device) addresses, set in app.js. A button is added so users can add extra MAC addresses to this list. This application only works on Android since iOS uses random UUIDs to distinguish devices instead of MAC addresses
+
