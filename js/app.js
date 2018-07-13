@@ -122,7 +122,7 @@ var app = {};
 		);
 		displayConnectStatus("Scanning for Bluetooth devices..");
 		//每隔0.5秒显示一次页面
-		updateTimer = setInterval(displayDeviceList, 500);
+		updateTimer = setInterval(displayDeviceList, 1000);
 		
 		setTimeout(
 			function() 

@@ -23,21 +23,22 @@
 	<button class="blue wide" onclick="onScanButton()">Scan</button>
 	<!-- <button class="blue wide" onclick="connect()">Connect</button> -->
 	<button class="green wide" onclick="temperatureOn()">temperatureOn</button>
-	<button class="green wide" onclick="accelerometerOn()">accelerometerOn</button>
-	<button class="green wide" onclick="gyroscopeOn()">gyroscopeOn</button>
+	<!--<button class="green wide" onclick="accelerometerOn()">accelerometerOn</button>-->
+	<!--<button class="green wide" onclick="gyroscopeOn()">gyroscopeOn</button>-->
 	<!-- <button class="green wide" onclick="humidityOn()">humidityOn</button> -->
 	<!--<button class="green wide" onclick="magnetometerOn()">magnetometerOn</button>
 	<button class="green wide" onclick="humidityOn()">humidityOn</button> -->
 	<!-- <button class="green wide" onclick="barometerOn()">barometerOn</button> -->
-	<button class="green wide" onclick="sensor_fusionOn()">sensor_fusionOn</button>
+	<!-- <button class="green wide" onclick="sensor_fusionOn()">sensor_fusionOn</button>-->
 	<!-- <button class="red wide" onclick="disconnect()">discnnect</button> -->
-	<button class="blue wide" onclick="sensorOn()">sensorOn</button>
+	<button class="blue wide" onclick="sensorOn(true)">collect static data</button>
+	<button class="blue wide" onclick="sensorOn(false)">sensorOn</button>
 	<button class="red wide" onclick="sensorOff()">sensorOff</button>	
 	<br/><br/>	
 	<button onclick="connectMultiDevices()" class="blue small wide">CONNECT ALL</button>
 	<button onclick="onDisconnectButton()" class="red small wide">DISCONNECT ALL</button>
 	<ul id="found-devices" class="dynamic"></ul>
-	<canvas width="300" height="200" id="chart_canvas"></canvas>
+	<canvas width="600" height="300" id="chart_canvas"></canvas>
 
 	<script src="cordova.js"></script>
 	<script src="js/paho-mqtt.js"></script>

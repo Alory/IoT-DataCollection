@@ -10,7 +10,8 @@ function getJsonLength(jsonData){
 document.addEventListener('deviceready',	
 	function() {
 		client = new Paho.MQTT.Client("ec2-18-217-114-173.us-east-2.compute.amazonaws.com", 1883, "BLE-IOT");
-		client.connect({onSuccess: onConnect});	 	
+		client.connect({onSuccess: onConnect});	 
+		client.onMessageArrived = onMessageArrived;		
 	}, 
 	false
 );
@@ -34,13 +35,36 @@ var sensorsStateFlag = {"state":"off","record":false};
 var payLoadBuffer = [];//buffer of payload
 var sensorStat = "";//sensors state
 
-var chart = new SmoothieChart({minValue: 0, maxValue: 40});
+var chart = new SmoothieChart({minValue: 0, maxValue: 0.05});
 var line_x = new TimeSeries();
 var line_y = new TimeSeries();
 var line_z = new TimeSeries();
 var line = [line_x,line_y,line_z]
 
+var processStaticFlag = false//static data not sent to server yet
+var staticFlag = false;//staticFlag=true means collect the static data
+var trialFlag = false;//collecting trail data
+var staticBuffer = []//static data buffer
+var trialData = {}//store the data by time stamp
+var lastMoment = ""
 
+addr2pos = {"90BDB8B2-4737-1EB3-8AC7-756943596524": "LL", "7DFEC5A2-697F-482F-C6A8-9A0450ECC674": "LM",
+            "9DBD3CB0-12E9-D9F8-823A-EEAEA7A840D1": "RL", "8D6C8805-B13E-9F56-5B88-1DC63407869F": "RM", 
+            "ADF9BB24-6649-8CC1-AF67-8AACB4F146EC": "RM", "92F37785-2E73-2E79-0F6F-856BDEC44D29":"RL"}
+
+function onMessageArrived(msg)
+{
+	msgContent = message.payloadString
+	topic = message.destinationName
+	if(topic == "staticData")
+	{
+		if(msgContent == "finished")
+		{
+			processStaticFlag = false
+			staticBuffer = []
+		}		
+	}
+}
 
 function initialize() 
 {	
@@ -308,29 +332,51 @@ function sensorOff()
 			})(i);
 			
 		}
-		/*if(sensorsStateFlag.record)
+		
+		if(staticFlag == true)
 		{
-			sensorsStateFlag.record = false;
-			var tempMessage = "sensorOff"
+			processStaticFlag = true//start to send static data to server, disable sensoron button
+			staticFlag = false;
+			var tempMessage = staticBuffer.join("\n");
 			var message = new Paho.MQTT.Message(tempMessage);
-			message.destinationName = "recordFlag";
+			message.destinationName = "staticData";
+			client.send(message);			
+		}
+		else if(trialFlag == true)
+		{			
+			currdata = trialData[lastMoment]
+        
+			var tempMessage = JSON.stringify(currdata)
+			var message = new Paho.MQTT.Message(tempMessage);
+			message.destinationName = "trialData";
 			client.send(message);
-		}*/		
+		}
+		
 		console.log('Sensor off');
 		displayConnectStatus("All sensors off");
 		sensorStat = "off";
 	}	
 }
 
-function sensorOn()
-{
+function sensorOn(infoflag)
+{	
 	sensorStat = "on";
 	if (getJsonLength(devices) == 0)
 	{
 		console.log("NO SENSORS CONNECTED!")
 	}
+	else if(processStaticFlag == true)//server busy processing static data
+	{
+		displayConnectStatus("Processing static data!");
+	}
+	else if(trialFlag == true)
+	{
+		console.log("Collecting trial data...")
+		displayConnectStatus("Predicting KAM...");
+	}
 	else
 	{
+		staticFlag = infoflag
 		sensorsStateFlag.record = true;
 		for(i=0;i<getJsonLength(devices);i++)
 		{
@@ -345,12 +391,26 @@ function sensorOn()
 			})(i);
 			
 		}
-		var tempMessage = "sensorsOn";
-		var message = new Paho.MQTT.Message(tempMessage);
-		message.destinationName = "recordFlag";
-		client.send(message);
-		console.log('Sensor off');
-		displayConnectStatus("Some sensors on");
+		
+		if(staticFlag == true)
+		{
+			trialFlag = false
+			console.log('static data')
+		}
+		else
+		{
+			trialFlag = true
+			console.log('sending trial data');
+			displayConnectStatus("trial data prediction...");
+		}
+	}	
+}
+
+function staticData(msg)
+{
+	if(staticFlag == true)
+	{
+		staticBuffer.push(JSON.stringify(message));
 	}	
 }
 
@@ -384,14 +444,64 @@ function dataBuffer(message)
 	
 }
 
+function trialDataBuffer(msg)
+{
+	msgtime = msg["time"]
+	timestamp = msgtime.toString()
+	lastMoment = timestamp
+    if(msg['sensor'] == 'accelerometer')
+	{
+		index = 1000 
+	}
+	else
+	{
+		index = 1
+	}	
+    x = parseFloat(msg['value']['x']) * index
+    y = parseFloat(msg['value']['y']) * index
+    z = parseFloat(msg['value']['z']) * index
+    pos = addr2pos[msg['address']]
+	
+	len = getJsonLength(trialData)
+	if(len == 0)//first msg coming
+	{
+		trialData[timestamp] = {"LLACx":[],"LLACy":[],"LLACz":[],"LLGYx":[],"LLGYy":[],"LLGYz":[],"RLACx":[],"RLACy":[],"RLACz":[],"RLGYx":[],"RLGYy":[],"RLGYz":[]}
+		trialData[timestamp][pos + sensor + 'x'].push(x)
+        trialData[timestamp][pos + sensor + 'y'].push(y)
+        trialData[timestamp][pos + sensor + 'z'].push(z)
+	}
+	else if(timestamp in trialData)//still have data incoming in this moment
+	{
+		trialData[timestamp][pos + sensor + 'x'].push(x)
+        trialData[timestamp][pos + sensor + 'y'].push(y)
+        trialData[timestamp][pos + sensor + 'z'].push(z)
+	}
+	else//first data of new moment's coming
+	{
+		trialData[timestamp] = {"LLACx":[],"LLACy":[],"LLACz":[],"LLGYx":[],"LLGYy":[],"LLGYz":[],"RLACx":[],"RLACy":[],"RLACz":[],"RLGYx":[],"RLGYy":[],"RLGYz":[]}
+		trialData[timestamp][pos + sensor + 'x'].push(x)
+        trialData[timestamp][pos + sensor + 'y'].push(y)
+        trialData[timestamp][pos + sensor + 'z'].push(z)
+		
+		lastMom = (timestamp-1).toString()
+		currdata = trialData[lastMom]
+        
+		var tempMessage = JSON.stringify(currdata)
+		var message = new Paho.MQTT.Message(tempMessage);
+		message.destinationName = "trialData";
+		client.send(message);
+	}
+}
+
 function handleAccelerometerData(data)
 {
 	//console.log("Accelerometer data: " + JSON.stringify(data));
 	var now = Date.now();
 
 	//var tempMessage = {"time":now,"address":data.address,"accelerometer":data.payload};
-	var tempMessage = {"time":data.time,"address":data.address,"sensor":data.sensor,"value":data.payload,"unit":data.unit};
-	dataBuffer(tempMessage);
+	var tempMessage = {"time":data.time,"address":data.address,"sensor":data.sensor,"value":data.payload};
+	trialDataBuffer(tempMessage);
+	staticData(tempMessage)
 	/*var message = new Paho.MQTT.Message(JSON.stringify(tempMessage));
 	message.destinationName = "accelerometer";
 	client.send(message);*/
@@ -405,7 +515,7 @@ function handleTemperatureData(data)
 	window.accel_xyz = data.payload;
 
 	//var tempMessage = {"time":now,"address":data.address,"temperature":data.payload};
-	var tempMessage = {"time":now,"address":data.address,"sensor":data.sensor,"value":data.payload,"unit":data.unit};
+	var tempMessage = {"time":now,"address":data.address,"sensor":data.sensor,"value":data.payload};
 	var message = new Paho.MQTT.Message(JSON.stringify(tempMessage));
 	message.destinationName = "temperature";
 	client.send(message);
@@ -416,7 +526,7 @@ function handleSFLData(data)
 	//console.log('Sensor-Fusion data: ' + JSON.stringify(data))
 	var now = Date.now();
 
-	var tempMessage = {"time":data.time,"address":data.address,"sensor":data.sensor,"value":data.payload,"unit":data.unit};
+	var tempMessage = {"time":data.time,"address":data.address,"sensor":data.sensor,"value":data.payload};
 	var message = new Paho.MQTT.Message(JSON.stringify(tempMessage));
 	message.destinationName = "fusion";
 	client.send(message);
@@ -428,8 +538,9 @@ function handleGyroscopeData(data)
 	var now = Date.now();
 
 	//var tempMessage = {"time":now,"address":data.address,"gyroscope":data.payload};
-	var tempMessage = {"time":data.time,"address":data.address,"sensor":data.sensor,"value":data.payload,"unit":data.unit};
-	dataBuffer(tempMessage);
+	var tempMessage = {"time":data.time,"address":data.address,"sensor":data.sensor,"value":data.payload};
+	trialDataBuffer(tempMessage);
+	staticData(tempMessage)
 	/*var message = new Paho.MQTT.Message(JSON.stringify(tempMessage));
 	message.destinationName = "gyroscope";
 	client.send(message);*/
@@ -439,7 +550,7 @@ function handleBarometerData(data)
 	console.log('Barometer data: ' + JSON.stringify(data))
 	var now = Date.now();
 
-	var tempMessage = {"time":now,"address":data.address,"sensor":data.sensor,"value":data.payload,"unit":data.unit};
+	var tempMessage = {"time":now,"address":data.address,"sensor":data.sensor,"value":data.payload};
 	/*var message = new Paho.MQTT.Message(JSON.stringify(tempMessage));
 	message.destinationName = "barometer";
 	client.send(message);*/
